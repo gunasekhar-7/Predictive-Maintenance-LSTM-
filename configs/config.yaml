@@ -1,0 +1,89 @@
+# NASA C-MAPSS Predictive Maintenance Configuration
+
+dataset:
+  name: "FD001"
+  train_file: "train_FD001.txt"
+  test_file: "test_FD001.txt"
+  rul_file: "RUL_FD001.txt"
+  data_dir: "data/raw"
+  processed_dir: "data/processed"
+  columns:
+    - "unit_number"
+    - "time_in_cycles"
+    - "op_setting_1"
+    - "op_setting_2"
+    - "op_setting_3"
+    - "sensor_1"
+    - "sensor_2"
+    - "sensor_3"
+    - "sensor_4"
+    - "sensor_5"
+    - "sensor_6"
+    - "sensor_7"
+    - "sensor_8"
+    - "sensor_9"
+    - "sensor_10"
+    - "sensor_11"
+    - "sensor_12"
+    - "sensor_13"
+    - "sensor_14"
+    - "sensor_15"
+    - "sensor_16"
+    - "sensor_17"
+    - "sensor_18"
+    - "sensor_19"
+    - "sensor_20"
+    - "sensor_21"
+
+preprocessing:
+  variance_threshold: 1e-6
+  corr_threshold: 0.98
+  rul_cap: 125
+  scaler_type: "standard"   # standard | minmax
+  fit_on_train_only: true
+
+features:
+  rolling_windows: [5, 15, 30]
+  rolling_stats: ["mean", "std", "min", "max", "slope"]
+
+sequences:
+  window_length: 30
+  stride: 1
+  target_column: "rul_capped"
+
+model:
+  architecture: "lstm"          # lstm | gru | cnn_lstm | attention_lstm
+  input_size: null              # inferred
+  hidden_size: 128
+  num_layers: 2
+  dropout: 0.3
+  bidirectional: false
+  attention: false
+  cnn_filters: [32, 64]
+  cnn_kernel: 3
+
+training:
+  batch_size: 64
+  epochs: 15
+  learning_rate: 1e-3
+  weight_decay: 1e-5
+  patience: 5
+  gradient_clip_norm: 1.0
+  lr_scheduler: "cosine"
+  seed: 42
+  val_split: 0.2
+  group_split_by_engine: true
+
+evaluation:
+  metrics: ["rmse", "mae", "r2", "nasa_score"]
+  nasa_alpha_early: 13
+  nasa_alpha_late: 10
+  bootstrap_samples: 1000
+
+deployment:
+  model_path: "models/best_model.pt"
+  scaler_path: "models/scaler.pkl"
+  columns_path: "models/feature_columns.json"
+  rul_alert_threshold: 30
+  api_host: "0.0.0.0"
+  api_port: 8000
